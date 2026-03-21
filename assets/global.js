@@ -75,17 +75,16 @@ function formatMoney(cents, format = '${{amount}}') {
 
 class CartDrawer {
   constructor() {
-    this.drawer = document.querySelector('.cart-drawer');
-    this.overlay = document.querySelector('.cart-drawer__overlay');
-    this.itemsContainer = document.querySelector('.cart-drawer__items');
-    this.subtotalEl = document.querySelector('.cart-drawer__subtotal-value');
-    this.countEl = document.querySelector('.header__cart-count');
-    
+    // Use data attributes — these elements are always in the DOM regardless of cart state
+    this.drawer = document.querySelector('[data-cart-drawer]');
+    this.overlay = document.querySelector('[data-cart-overlay]');
+    this.countEl = document.querySelector('[data-cart-count]');
+
     this.bindEvents();
   }
 
   bindEvents() {
-    // Open cart drawer
+    // Open cart drawer from any [data-cart-toggle] element (header cart icon, etc.)
     document.querySelectorAll('[data-cart-toggle]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -93,40 +92,35 @@ class CartDrawer {
       });
     });
 
-    // Close cart drawer
+    // Close via overlay click or close button
     this.overlay?.addEventListener('click', () => this.close());
-    
-    document.querySelector('.cart-drawer__close')?.addEventListener('click', () => {
-      this.close();
-    });
+    document.querySelector('[data-cart-close]')?.addEventListener('click', () => this.close());
 
     // Close on Escape key
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen()) {
-        this.close();
-      }
+      if (e.key === 'Escape' && this.isOpen()) this.close();
     });
 
-    // Delegate click events for cart item actions
-    this.itemsContainer?.addEventListener('click', (e) => {
-      const target = e.target;
-      
-      if (target.matches('[data-quantity-minus]')) {
-        const key = target.closest('.cart-item').dataset.key;
-        const input = target.parentElement.querySelector('input');
+    // Delegate quantity/remove events from the stable drawer parent.
+    // This works for both the initial Liquid-rendered HTML and JS-re-rendered HTML.
+    this.drawer?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-quantity-minus], [data-quantity-plus], [data-remove-item]');
+      if (!btn) return;
+
+      const item = btn.closest('[data-cart-item]');
+      if (!item) return;
+
+      const key = item.dataset.key;
+
+      if (btn.matches('[data-quantity-minus]')) {
+        const input = item.querySelector('.cart-item__quantity-input');
         const newQty = Math.max(0, parseInt(input.value) - 1);
         this.updateItem(key, newQty);
-      }
-      
-      if (target.matches('[data-quantity-plus]')) {
-        const key = target.closest('.cart-item').dataset.key;
-        const input = target.parentElement.querySelector('input');
+      } else if (btn.matches('[data-quantity-plus]')) {
+        const input = item.querySelector('.cart-item__quantity-input');
         const newQty = parseInt(input.value) + 1;
         this.updateItem(key, newQty);
-      }
-      
-      if (target.matches('[data-remove-item]')) {
-        const key = target.closest('.cart-item').dataset.key;
+      } else if (btn.matches('[data-remove-item]')) {
         this.updateItem(key, 0);
       }
     });
@@ -159,45 +153,53 @@ class CartDrawer {
   }
 
   render(cart) {
-    if (!this.itemsContainer) return;
+    // Re-query every time — these are always in DOM thanks to the Liquid restructure
+    const itemsEl = document.querySelector('[data-cart-items]');
+    const emptyEl = document.querySelector('[data-cart-empty]');
+    const footerEl = document.querySelector('[data-cart-footer]');
+    const subtotalEl = document.querySelector('[data-cart-subtotal]');
+
+    if (!itemsEl || !emptyEl) return;
 
     if (cart.item_count === 0) {
-      this.itemsContainer.innerHTML = `
-        <div class="cart-drawer__empty">
-          <p>Your cart is empty</p>
-          <a href="/collections/all" class="btn btn--secondary">Continue Shopping</a>
-        </div>
-      `;
+      itemsEl.style.display = 'none';
+      emptyEl.style.display = '';
+      if (footerEl) footerEl.style.display = 'none';
     } else {
-      this.itemsContainer.innerHTML = cart.items.map(item => `
-        <div class="cart-item" data-key="${item.key}">
+      emptyEl.style.display = 'none';
+      itemsEl.style.display = '';
+      if (footerEl) footerEl.style.display = '';
+
+      itemsEl.innerHTML = cart.items.map(item => `
+        <div class="cart-item" data-cart-item data-key="${item.key}">
           <div class="cart-item__image">
-            <img src="${item.image || item.featured_image.url}" 
-                 alt="${item.title}"
-                 width="80" height="80"
-                 loading="lazy">
+            <img src="${item.image}" alt="${item.title}" width="80" height="80" loading="lazy">
           </div>
           <div class="cart-item__content">
-            <div class="cart-item__title">${item.product_title}</div>
-            ${item.variant_title ? `<div class="cart-item__variant">${item.variant_title}</div>` : ''}
-            <div class="cart-item__price">${formatMoney(item.final_line_price)}</div>
+            <p class="cart-item__title">${item.product_title}</p>
+            ${item.variant_title && item.variant_title !== 'Default Title' ? `<p class="cart-item__variant">${item.variant_title}</p>` : ''}
+            <p class="cart-item__price">${formatMoney(item.final_line_price)}</p>
             <div class="cart-item__quantity">
-              <button class="cart-item__quantity-btn" data-quantity-minus aria-label="Decrease quantity">−</button>
-              <input type="number" value="${item.quantity}" min="0" readonly>
-              <button class="cart-item__quantity-btn" data-quantity-plus aria-label="Increase quantity">+</button>
-              <button class="cart-item__remove" data-remove-item>Remove</button>
+              <button class="cart-item__quantity-btn" data-quantity-minus aria-label="Decrease quantity">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+              <input type="number" value="${item.quantity}" min="0" class="cart-item__quantity-input" readonly>
+              <button class="cart-item__quantity-btn" data-quantity-plus aria-label="Increase quantity">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
             </div>
           </div>
+          <button class="cart-item__remove" data-remove-item aria-label="Remove ${item.title}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
       `).join('');
     }
 
-    // Update subtotal
-    if (this.subtotalEl) {
-      this.subtotalEl.textContent = formatMoney(cart.total_price);
-    }
-
-    // Update cart count in header
+    if (subtotalEl) subtotalEl.textContent = formatMoney(cart.total_price);
     this.updateCount(cart.item_count);
   }
 
@@ -451,21 +453,22 @@ class ProductGallery {
 
 class MobileMenu {
   constructor() {
-    this.toggle = document.querySelector('[data-mobile-menu-toggle]');
+    // Renamed to toggleBtn to avoid collision with the toggle() method below
     this.menu = document.querySelector('.mobile-menu');
     this.overlay = document.querySelector('.mobile-menu__overlay');
-    
+
     this.bindEvents();
   }
 
   bindEvents() {
-    this.toggle?.addEventListener('click', () => this.toggle());
+    // Both the hamburger button and the in-menu close button share [data-mobile-menu-toggle]
+    document.querySelectorAll('[data-mobile-menu-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => this.toggle());
+    });
     this.overlay?.addEventListener('click', () => this.close());
-    
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen()) {
-        this.close();
-      }
+      if (e.key === 'Escape' && this.isOpen()) this.close();
     });
   }
 

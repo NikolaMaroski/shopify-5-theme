@@ -114,9 +114,7 @@
 
   {%- sections 'footer-group' -%}
 
-  {%- if settings.cart_type == 'drawer' -%}
-    {%- render 'cart-drawer' -%}
-  {%- endif -%}
+  {%- section 'cart-drawer' -%}
 
   <script src="{{ 'global.js' | asset_url }}" defer></script>
 
