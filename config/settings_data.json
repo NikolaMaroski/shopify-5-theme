@@ -1,0 +1,68 @@
+{
+  "current": {
+    "colors_background": "#FAFAF9",
+    "colors_text": "#1A1A1A",
+    "colors_accent": "#B8860B",
+    "typography_heading_font": "playfair_display_n4",
+    "typography_body_font": "dm_sans_n4",
+    "layout_page_width": 1200,
+    "cart_type": "drawer",
+    "social_twitter_link": "",
+    "social_facebook_link": "",
+    "social_instagram_link": "",
+    "social_tiktok_link": "",
+    "social_pinterest_link": "",
+    "social_youtube_link": "",
+    "sections": {
+      "header": {
+        "type": "header",
+        "settings": {
+          "logo_width": 120,
+          "show_search": true,
+          "sticky_header": true
+        }
+      },
+      "footer": {
+        "type": "footer",
+        "settings": {
+          "show_newsletter": true,
+          "newsletter_heading": "Stay in touch",
+          "newsletter_description": "Subscribe for exclusive offers and updates.",
+          "show_social": true,
+          "copyright_text": "",
+          "show_payment_icons": true
+        }
+      }
+    },
+    "content_for_index": []
+  },
+  "presets": {
+    "Default": {
+      "colors_background": "#FAFAF9",
+      "colors_text": "#1A1A1A",
+      "colors_accent": "#B8860B",
+      "typography_heading_font": "playfair_display_n4",
+      "typography_body_font": "dm_sans_n4",
+      "layout_page_width": 1200,
+      "cart_type": "drawer"
+    },
+    "Dark": {
+      "colors_background": "#1A1A1A",
+      "colors_text": "#FAFAF9",
+      "colors_accent": "#D4AF37",
+      "typography_heading_font": "playfair_display_n4",
+      "typography_body_font": "dm_sans_n4",
+      "layout_page_width": 1200,
+      "cart_type": "drawer"
+    },
+    "Warm": {
+      "colors_background": "#FDF8F3",
+      "colors_text": "#2D2A26",
+      "colors_accent": "#C45D25",
+      "typography_heading_font": "playfair_display_n4",
+      "typography_body_font": "dm_sans_n4",
+      "layout_page_width": 1200,
+      "cart_type": "drawer"
+    }
+  }
+}

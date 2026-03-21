@@ -1,0 +1,220 @@
+{%- comment -%}
+  HERO SECTION
+  ============
+  Full-width hero with background image, headline, and CTA.
+  
+  INTERVIEW POINT: This demonstrates:
+  - Responsive images with srcset
+  - Lazy loading strategies
+  - Content alignment options
+  - CSS custom properties for theming
+{%- endcomment -%}
+
+<section class="hero{% if section.settings.full_height %} hero--full{% endif %}" 
+         style="min-height: {{ section.settings.height }}vh;">
+  
+  {%- comment -%} Background Image {%- endcomment -%}
+  <div class="hero__background">
+    {%- if section.settings.image != blank -%}
+      <img 
+        class="hero__background-image"
+        src="{{ section.settings.image | image_url: width: 1920 }}"
+        srcset="{{ section.settings.image | image_url: width: 750 }} 750w,
+                {{ section.settings.image | image_url: width: 1100 }} 1100w,
+                {{ section.settings.image | image_url: width: 1500 }} 1500w,
+                {{ section.settings.image | image_url: width: 1920 }} 1920w"
+        sizes="100vw"
+        alt="{{ section.settings.image.alt | default: section.settings.heading | escape }}"
+        width="{{ section.settings.image.width }}"
+        height="{{ section.settings.image.height }}"
+        loading="eager"
+        fetchpriority="high"
+      >
+    {%- else -%}
+      {%- comment -%} Placeholder when no image {%- endcomment -%}
+      <div class="hero__background-placeholder" style="background: linear-gradient(135deg, rgba(var(--color-accent), 0.1), rgba(var(--color-contrast), 0.05));"></div>
+    {%- endif -%}
+    
+    <div class="hero__overlay" style="
+      background: linear-gradient(
+        to {{ section.settings.content_position | replace: 'left', 'right' | replace: 'right', 'left' }},
+        rgba(var(--color-base), {{ section.settings.overlay_opacity | divided_by: 100.0 }}) 0%,
+        rgba(var(--color-base), {{ section.settings.overlay_opacity | divided_by: 100.0 | times: 0.3 }}) 100%
+      );
+    "></div>
+  </div>
+
+  {%- comment -%} Content {%- endcomment -%}
+  <div class="container">
+    <div class="hero__content" style="
+      {%- case section.settings.content_position -%}
+        {%- when 'left' -%}
+          margin-right: auto;
+        {%- when 'center' -%}
+          margin: 0 auto;
+          text-align: center;
+        {%- when 'right' -%}
+          margin-left: auto;
+      {%- endcase -%}
+    ">
+      {%- if section.settings.subtitle != blank -%}
+        <p class="hero__subtitle animate-slide-up">{{ section.settings.subtitle }}</p>
+      {%- endif -%}
+      
+      {%- if section.settings.heading != blank -%}
+        <h1 class="hero__title animate-slide-up" style="animation-delay: 100ms;">
+          {{ section.settings.heading }}
+        </h1>
+      {%- endif -%}
+      
+      {%- if section.settings.description != blank -%}
+        <div class="hero__description animate-slide-up" style="animation-delay: 200ms;">
+          {{ section.settings.description }}
+        </div>
+      {%- endif -%}
+
+      {%- if section.settings.button_label != blank or section.settings.button_secondary_label != blank -%}
+        <div class="hero__actions animate-slide-up" style="animation-delay: 300ms;
+          {%- if section.settings.content_position == 'center' -%}justify-content: center;{%- endif -%}
+        ">
+          {%- if section.settings.button_label != blank -%}
+            <a href="{{ section.settings.button_link }}" class="btn btn--primary btn--large">
+              {{ section.settings.button_label }}
+            </a>
+          {%- endif -%}
+          
+          {%- if section.settings.button_secondary_label != blank -%}
+            <a href="{{ section.settings.button_secondary_link }}" class="btn btn--secondary btn--large">
+              {{ section.settings.button_secondary_label }}
+            </a>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero__background-placeholder {
+    position: absolute;
+    inset: 0;
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Hero Banner",
+  "tag": "section",
+  "class": "section-hero",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Background image"
+    },
+    {
+      "type": "range",
+      "id": "height",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "default": 80,
+      "unit": "%",
+      "label": "Section height"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_height",
+      "label": "Full screen height",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "default": 50,
+      "unit": "%",
+      "label": "Overlay opacity"
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Welcome to"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Curated Essentials"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description",
+      "default": "<p>Discover our carefully selected collection of five essential products, each chosen for quality and purpose.</p>"
+    },
+    {
+      "type": "select",
+      "id": "content_position",
+      "label": "Content position",
+      "default": "left",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "Primary button"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Secondary button"
+    },
+    {
+      "type": "text",
+      "id": "button_secondary_label",
+      "label": "Button label",
+      "default": "Learn More"
+    },
+    {
+      "type": "url",
+      "id": "button_secondary_link",
+      "label": "Button link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero Banner"
+    }
+  ]
+}
+{% endschema %}

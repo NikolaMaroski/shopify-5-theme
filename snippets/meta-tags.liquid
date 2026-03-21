@@ -1,0 +1,116 @@
+{%- comment -%}
+  META TAGS SNIPPET
+  =================
+  SEO meta tags for all page types.
+  
+  INTERVIEW POINTS:
+  - page_title and page_description
+  - Open Graph and Twitter Card meta
+  - Canonical URLs
+  - Template-specific logic
+{%- endcomment -%}
+
+{%- liquid
+  assign og_title = page_title
+  assign og_description = page_description | default: shop.description
+  assign og_type = 'website'
+  assign og_image = nil
+
+  if template.name == 'product'
+    assign og_type = 'product'
+    if product.featured_image
+      assign og_image = product.featured_image | image_url: width: 1200
+    endif
+  elsif template.name == 'article'
+    assign og_type = 'article'
+    if article.image
+      assign og_image = article.image | image_url: width: 1200
+    endif
+  elsif template.name == 'collection'
+    if collection.image
+      assign og_image = collection.image | image_url: width: 1200
+    endif
+  endif
+
+  unless og_image
+    if settings.share_image
+      assign og_image = settings.share_image | image_url: width: 1200
+    endif
+  endunless
+-%}
+
+{%- comment -%} Basic Meta Tags {%- endcomment -%}
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+{%- if page_description -%}
+  <meta name="description" content="{{ page_description | escape }}">
+{%- endif -%}
+
+{%- comment -%} Canonical URL {%- endcomment -%}
+<link rel="canonical" href="{{ canonical_url }}">
+
+{%- comment -%} Open Graph Tags {%- endcomment -%}
+<meta property="og:site_name" content="{{ shop.name }}">
+<meta property="og:title" content="{{ og_title | escape }}">
+<meta property="og:type" content="{{ og_type }}">
+<meta property="og:url" content="{{ canonical_url }}">
+
+{%- if og_description -%}
+  <meta property="og:description" content="{{ og_description | escape }}">
+{%- endif -%}
+
+{%- if og_image -%}
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:secure_url" content="{{ og_image }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+{%- endif -%}
+
+{%- comment -%} Product-specific Open Graph {%- endcomment -%}
+{%- if template.name == 'product' -%}
+  <meta property="og:price:amount" content="{{ product.price | money_without_currency | strip_html }}">
+  <meta property="og:price:currency" content="{{ cart.currency.iso_code }}">
+  <meta property="product:availability" content="{{ product.available | yepnope: 'in stock', 'out of stock' }}">
+{%- endif -%}
+
+{%- comment -%} Article-specific Open Graph {%- endcomment -%}
+{%- if template.name == 'article' -%}
+  <meta property="article:published_time" content="{{ article.published_at | date: '%Y-%m-%dT%H:%M:%S%z' }}">
+  <meta property="article:author" content="{{ article.author }}">
+  {%- for tag in article.tags -%}
+    <meta property="article:tag" content="{{ tag }}">
+  {%- endfor -%}
+{%- endif -%}
+
+{%- comment -%} Twitter Card Tags {%- endcomment -%}
+<meta name="twitter:card" content="{% if og_image %}summary_large_image{% else %}summary{% endif %}">
+<meta name="twitter:title" content="{{ og_title | escape }}">
+
+{%- if og_description -%}
+  <meta name="twitter:description" content="{{ og_description | escape }}">
+{%- endif -%}
+
+{%- if og_image -%}
+  <meta name="twitter:image" content="{{ og_image }}">
+{%- endif -%}
+
+{%- if settings.social_twitter_link != blank -%}
+  {%- assign twitter_handle = settings.social_twitter_link | split: 'twitter.com/' | last | split: '/' | first -%}
+  <meta name="twitter:site" content="@{{ twitter_handle }}">
+{%- endif -%}
+
+{%- comment -%} Favicon {%- endcomment -%}
+{%- if settings.favicon -%}
+  <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32 }}">
+  <link rel="apple-touch-icon" href="{{ settings.favicon | image_url: width: 180 }}">
+{%- endif -%}
+
+{%- comment -%} Theme Color (for mobile browsers) {%- endcomment -%}
+<meta name="theme-color" content="{{ settings.colors_background }}">
+
+{%- comment -%} Preconnect to external resources {%- endcomment -%}
+<link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

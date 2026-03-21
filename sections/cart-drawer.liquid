@@ -1,0 +1,353 @@
+{%- comment -%}
+  CART DRAWER SECTION
+  ===================
+  Slide-in cart drawer with AJAX functionality.
+  
+  INTERVIEW POINTS:
+  - Section Rendering API integration (data-section-id)
+  - Cart object properties (items, total_price, item_count)
+  - Line item properties and variant info
+  - Money formatting with currency
+  - Data attributes for JS binding
+{%- endcomment -%}
+
+<div class="cart-drawer__overlay" data-cart-overlay></div>
+<aside class="cart-drawer" data-cart-drawer aria-label="Shopping cart" role="dialog" aria-modal="true" data-section-id="{{ section.id }}">
+  <div class="cart-drawer__header">
+    <h2 class="cart-drawer__title">Your Cart</h2>
+    <button class="cart-drawer__close" data-cart-close aria-label="Close cart">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <div class="cart-drawer__content" data-cart-content>
+    {%- if cart.item_count > 0 -%}
+      <div class="cart-drawer__items">
+        {%- for item in cart.items -%}
+          <div class="cart-item" data-cart-item data-key="{{ item.key }}">
+            <a href="{{ item.url }}" class="cart-item__image-link">
+              {%- if item.image != blank -%}
+                <img 
+                  src="{{ item.image | image_url: width: 150 }}"
+                  alt="{{ item.title | escape }}"
+                  width="75"
+                  height="75"
+                  loading="lazy"
+                  class="cart-item__image"
+                >
+              {%- else -%}
+                {{ 'product-1' | placeholder_svg_tag: 'cart-item__image placeholder-svg' }}
+              {%- endif -%}
+            </a>
+
+            <div class="cart-item__details">
+              <a href="{{ item.url }}" class="cart-item__title">{{ item.product.title }}</a>
+              
+              {%- if item.variant.title != 'Default Title' -%}
+                <p class="cart-item__variant">{{ item.variant.title }}</p>
+              {%- endif -%}
+
+              {%- if item.properties.size > 0 -%}
+                <div class="cart-item__properties">
+                  {%- for property in item.properties -%}
+                    {%- unless property.last == blank -%}
+                      <p class="cart-item__property">
+                        <span class="cart-item__property-name">{{ property.first }}:</span>
+                        {{ property.last }}
+                      </p>
+                    {%- endunless -%}
+                  {%- endfor -%}
+                </div>
+              {%- endif -%}
+
+              <div class="cart-item__bottom">
+                <div class="cart-item__quantity">
+                  <button 
+                    class="cart-item__quantity-btn" 
+                    data-quantity-change="-1"
+                    data-key="{{ item.key }}"
+                    aria-label="Decrease quantity"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </button>
+                  <span class="cart-item__quantity-value" data-quantity-value>{{ item.quantity }}</span>
+                  <button 
+                    class="cart-item__quantity-btn" 
+                    data-quantity-change="1"
+                    data-key="{{ item.key }}"
+                    aria-label="Increase quantity"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </button>
+                </div>
+
+                <p class="cart-item__price" data-item-price>
+                  {{ item.final_line_price | money }}
+                </p>
+              </div>
+            </div>
+
+            <button 
+              class="cart-item__remove" 
+              data-remove-item
+              data-key="{{ item.key }}"
+              aria-label="Remove {{ item.title }}"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- else -%}
+      <div class="cart-drawer__empty">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <p class="cart-drawer__empty-text">Your cart is empty</p>
+        <a href="{{ routes.all_products_collection_url }}" class="btn btn--primary">
+          Start Shopping
+        </a>
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- if cart.item_count > 0 -%}
+    <div class="cart-drawer__footer" data-cart-footer>
+      {%- if section.settings.show_cart_note -%}
+        <div class="cart-drawer__note">
+          <label for="cart-note" class="cart-drawer__note-label">Order note</label>
+          <textarea 
+            id="cart-note" 
+            name="note" 
+            class="form-textarea cart-drawer__note-input"
+            placeholder="Add a note to your order..."
+            data-cart-note
+          >{{ cart.note }}</textarea>
+        </div>
+      {%- endif -%}
+
+      <div class="cart-drawer__totals">
+        <div class="cart-drawer__subtotal">
+          <span>Subtotal</span>
+          <span data-cart-subtotal>{{ cart.total_price | money }}</span>
+        </div>
+        <p class="cart-drawer__shipping-note">
+          Shipping and taxes calculated at checkout
+        </p>
+      </div>
+
+      <div class="cart-drawer__actions">
+        <a href="{{ routes.cart_url }}" class="btn btn--secondary btn--full">
+          View Cart
+        </a>
+        <button type="submit" name="checkout" class="btn btn--primary btn--full" form="cart-drawer-form">
+          Checkout
+        </button>
+      </div>
+    </div>
+    
+    {%- comment -%} Hidden form for checkout submission {%- endcomment -%}
+    <form id="cart-drawer-form" action="{{ routes.cart_url }}" method="post">
+      <input type="hidden" name="checkout" value="1">
+    </form>
+  {%- endif -%}
+</aside>
+
+<style>
+  .cart-drawer__content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+  }
+
+  .cart-drawer__items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .cart-item {
+    display: grid;
+    grid-template-columns: 75px 1fr auto;
+    gap: var(--space-md);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid rgba(var(--color-contrast), 0.1);
+  }
+
+  .cart-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .cart-item__image {
+    width: 75px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+
+  .cart-item__details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .cart-item__title {
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .cart-item__variant,
+  .cart-item__property {
+    font-size: var(--font-size-sm);
+    color: rgba(var(--color-contrast), 0.6);
+    margin: 0;
+  }
+
+  .cart-item__property-name {
+    font-weight: 500;
+  }
+
+  .cart-item__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+  }
+
+  .cart-item__quantity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    border: 1px solid rgba(var(--color-contrast), 0.2);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs);
+  }
+
+  .cart-item__quantity-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(var(--color-contrast), 0.6);
+    transition: color var(--duration-fast);
+  }
+
+  .cart-item__quantity-btn:hover {
+    color: rgb(var(--color-contrast));
+  }
+
+  .cart-item__quantity-value {
+    min-width: 2ch;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cart-item__price {
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .cart-item__remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-xs);
+    color: rgba(var(--color-contrast), 0.4);
+    transition: color var(--duration-fast);
+    align-self: start;
+  }
+
+  .cart-item__remove:hover {
+    color: #ef4444;
+  }
+
+  .cart-drawer__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    gap: var(--space-lg);
+    color: rgba(var(--color-contrast), 0.4);
+  }
+
+  .cart-drawer__empty-text {
+    font-size: var(--font-size-lg);
+    color: rgba(var(--color-contrast), 0.6);
+  }
+
+  .cart-drawer__footer {
+    padding: var(--space-lg);
+    border-top: 1px solid rgba(var(--color-contrast), 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .cart-drawer__note-label {
+    display: block;
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-xs);
+  }
+
+  .cart-drawer__note-input {
+    min-height: 60px;
+    resize: none;
+  }
+
+  .cart-drawer__totals {
+    text-align: center;
+  }
+
+  .cart-drawer__subtotal {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    margin-bottom: var(--space-xs);
+  }
+
+  .cart-drawer__shipping-note {
+    font-size: var(--font-size-sm);
+    color: rgba(var(--color-contrast), 0.6);
+    margin: 0;
+  }
+
+  .cart-drawer__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Cart drawer",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_cart_note",
+      "label": "Show cart note",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

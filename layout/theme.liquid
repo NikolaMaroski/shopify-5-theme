@@ -1,0 +1,129 @@
+<!doctype html>
+<html class="no-js" lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height, minimum-scale=1.0">
+  
+  <title>
+    {{ page_title }}
+    {%- if current_tags %} &ndash; tagged "{{ current_tags | join: ', ' }}"{% endif -%}
+    {%- if current_page != 1 %} &ndash; Page {{ current_page }}{% endif -%}
+    {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless -%}
+  </title>
+
+  {% render 'meta-tags' %}
+
+  {%- comment -%} Google Fonts - Premium Typography {%- endcomment -%}
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+
+  {{ 'base.css' | asset_url | stylesheet_tag }}
+  
+  {{ content_for_header }}
+
+  <script>
+    document.documentElement.className = document.documentElement.className.replace('no-js', 'js');
+    
+    window.shopUrl = '{{ request.origin }}';
+    window.routes = {
+      cart_add_url: '{{ routes.cart_add_url }}',
+      cart_change_url: '{{ routes.cart_change_url }}',
+      cart_update_url: '{{ routes.cart_update_url }}',
+      cart_url: '{{ routes.cart_url }}',
+      predictive_search_url: '{{ routes.predictive_search_url }}'
+    };
+
+    window.cartStrings = {
+      error: `{{ 'sections.cart.cart_error' | t }}`,
+      quantityError: `{{ 'sections.cart.cart_quantity_error' | t: quantity: '[quantity]' }}`
+    };
+
+    window.variantStrings = {
+      addToCart: `{{ 'products.product.add_to_cart' | t }}`,
+      soldOut: `{{ 'products.product.sold_out' | t }}`,
+      unavailable: `{{ 'products.product.unavailable' | t }}`
+    };
+  </script>
+
+  <style>
+    :root {
+      /* Primary Palette - Refined & Distinctive */
+      --color-base: {{ settings.colors_background.red }}, {{ settings.colors_background.green }}, {{ settings.colors_background.blue }};
+      --color-contrast: {{ settings.colors_text.red }}, {{ settings.colors_text.green }}, {{ settings.colors_text.blue }};
+      --color-accent: {{ settings.colors_accent.red }}, {{ settings.colors_accent.green }}, {{ settings.colors_accent.blue }};
+      
+      /* Typography Scale */
+      --font-heading: 'Playfair Display', serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-size-base: 16px;
+      --font-size-sm: 0.875rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.5rem;
+      --font-size-2xl: 2rem;
+      --font-size-3xl: 2.5rem;
+      --font-size-4xl: 3.5rem;
+      --font-size-display: clamp(2.5rem, 6vw, 5rem);
+      
+      /* Spacing - 8px Grid System */
+      --space-unit: 8px;
+      --space-xs: calc(var(--space-unit) * 1);
+      --space-sm: calc(var(--space-unit) * 2);
+      --space-md: calc(var(--space-unit) * 3);
+      --space-lg: calc(var(--space-unit) * 4);
+      --space-xl: calc(var(--space-unit) * 6);
+      --space-2xl: calc(var(--space-unit) * 8);
+      --space-3xl: calc(var(--space-unit) * 12);
+      
+      /* Layout */
+      --page-width: 1400px;
+      --page-width-narrow: 900px;
+      --header-height: 80px;
+      
+      /* Animations */
+      --duration-short: 150ms;
+      --duration-default: 300ms;
+      --duration-long: 500ms;
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      /* Border Radius */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+    }
+  </style>
+</head>
+
+<body class="template-{{ template.name | handle }}{% if template.suffix %} template-{{ template.name }}-{{ template.suffix | handle }}{% endif %}">
+  <a class="skip-to-content-link visually-hidden" href="#MainContent">
+    {{ 'accessibility.skip_to_content' | t }}
+  </a>
+
+  {%- sections 'header-group' -%}
+
+  <main id="MainContent" class="main-content" role="main" tabindex="-1">
+    {{ content_for_layout }}
+  </main>
+
+  {%- sections 'footer-group' -%}
+
+  {%- if settings.cart_type == 'drawer' -%}
+    {%- render 'cart-drawer' -%}
+  {%- endif -%}
+
+  <script src="{{ 'global.js' | asset_url }}" defer></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('page-loaded');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+{%- comment -%}
+  COLLECTION BANNER SECTION
+  =========================
+  Displays collection title, image, and description.
+  
+  INTERVIEW POINTS:
+  - Collection object access
+  - Conditional rendering based on settings
+  - Image URL filters with responsive sizes
+{%- endcomment -%}
+
+<section class="collection-banner">
+  {%- if section.settings.show_collection_image and collection.image != blank -%}
+    <div class="collection-banner__image-wrapper">
+      <img 
+        src="{{ collection.image | image_url: width: 1920 }}"
+        srcset="
+          {{ collection.image | image_url: width: 750 }} 750w,
+          {{ collection.image | image_url: width: 1100 }} 1100w,
+          {{ collection.image | image_url: width: 1500 }} 1500w,
+          {{ collection.image | image_url: width: 1920 }} 1920w
+        "
+        sizes="100vw"
+        alt="{{ collection.title }}"
+        width="{{ collection.image.width }}"
+        height="{{ collection.image.height }}"
+        loading="eager"
+        class="collection-banner__image"
+      >
+      <div class="collection-banner__overlay"></div>
+    </div>
+  {%- endif -%}
+
+  <div class="container">
+    <div class="collection-banner__content{% unless collection.image != blank and section.settings.show_collection_image %} collection-banner__content--no-image{% endunless %}">
+      <h1 class="collection-banner__title">{{ collection.title }}</h1>
+      
+      {%- if section.settings.show_collection_description and collection.description != blank -%}
+        <div class="collection-banner__description">
+          {{ collection.description }}
+        </div>
+      {%- endif -%}
+
+      <p class="collection-banner__count">
+        {{ collection.products_count }} {{ collection.products_count | pluralize: 'product', 'products' }}
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .collection-banner {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .collection-banner__image-wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .collection-banner__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .collection-banner__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .collection-banner__content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: var(--space-3xl) 0;
+    color: rgb(var(--color-base));
+  }
+
+  .collection-banner__content--no-image {
+    color: rgb(var(--color-contrast));
+    padding: var(--space-2xl) 0;
+  }
+
+  .collection-banner__title {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-display);
+    font-weight: 500;
+    margin: 0 0 var(--space-md);
+  }
+
+  .collection-banner__description {
+    max-width: 600px;
+    margin: 0 auto var(--space-md);
+    line-height: 1.6;
+    opacity: 0.9;
+  }
+
+  .collection-banner__count {
+    font-size: var(--font-size-sm);
+    opacity: 0.7;
+    margin: 0;
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Collection banner",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_collection_image",
+      "label": "Show collection image",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_collection_description",
+      "label": "Show collection description",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

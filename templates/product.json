@@ -1,0 +1,25 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "settings": {
+        "show_vendor": true,
+        "enable_sticky_gallery": true
+      }
+    },
+    "related_products": {
+      "type": "featured-products",
+      "settings": {
+        "subheading": "You May Also Like",
+        "heading": "Related Products",
+        "products_count": 4,
+        "columns": "4",
+        "show_view_all": false
+      }
+    }
+  },
+  "order": [
+    "main",
+    "related_products"
+  ]
+}

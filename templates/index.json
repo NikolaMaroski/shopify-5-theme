@@ -1,0 +1,35 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero",
+      "settings": {
+        "heading": "Five Perfect Products",
+        "subheading": "Curated Essentials",
+        "description": "<p>Discover our carefully selected collection of five exceptional products, each chosen for quality and craftsmanship.</p>",
+        "button_text": "Shop Now",
+        "button_link": "shopify://collections/all",
+        "button_secondary_text": "Learn More",
+        "button_secondary_link": "shopify://pages/about",
+        "height": 85,
+        "full_height": false,
+        "overlay_opacity": 40,
+        "content_position": "center"
+      }
+    },
+    "featured_products": {
+      "type": "featured-products",
+      "settings": {
+        "subheading": "Curated Selection",
+        "heading": "Our Products",
+        "products_count": 5,
+        "columns": "5",
+        "show_view_all": true,
+        "view_all_text": "View All Products"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "featured_products"
+  ]
+}

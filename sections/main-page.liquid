@@ -1,0 +1,125 @@
+{%- comment -%}
+  MAIN PAGE SECTION
+  =================
+  Renders standard CMS page content.
+  
+  INTERVIEW POINTS:
+  - page object access
+  - Rich text rendering
+{%- endcomment -%}
+
+<section class="page-section">
+  <div class="container">
+    <div class="page-content">
+      <h1 class="page-title">{{ page.title }}</h1>
+      
+      {%- if page.content != blank -%}
+        <div class="page-body rte">
+          {{ page.content }}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+<style>
+  .page-section {
+    padding: var(--space-2xl) 0;
+    min-height: 50vh;
+  }
+
+  .page-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .page-title {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-2xl);
+    font-weight: 500;
+    margin: 0 0 var(--space-xl);
+    text-align: center;
+  }
+
+  .page-body {
+    line-height: 1.8;
+  }
+
+  /* Rich text editor styles */
+  .rte h2 {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-xl);
+    font-weight: 500;
+    margin: var(--space-xl) 0 var(--space-md);
+  }
+
+  .rte h3 {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    margin: var(--space-lg) 0 var(--space-sm);
+  }
+
+  .rte p {
+    margin: 0 0 var(--space-md);
+  }
+
+  .rte ul,
+  .rte ol {
+    margin: 0 0 var(--space-md);
+    padding-left: var(--space-lg);
+  }
+
+  .rte li {
+    margin-bottom: var(--space-xs);
+  }
+
+  .rte a {
+    color: rgb(var(--color-accent));
+    text-decoration: underline;
+  }
+
+  .rte a:hover {
+    text-decoration: none;
+  }
+
+  .rte img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    margin: var(--space-lg) 0;
+  }
+
+  .rte blockquote {
+    border-left: 3px solid rgb(var(--color-accent));
+    margin: var(--space-lg) 0;
+    padding-left: var(--space-lg);
+    font-style: italic;
+    color: rgb(var(--color-contrast) / 0.8);
+  }
+
+  .rte table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--space-lg) 0;
+  }
+
+  .rte th,
+  .rte td {
+    padding: var(--space-sm);
+    border: 1px solid rgb(var(--color-contrast) / 0.2);
+    text-align: left;
+  }
+
+  .rte th {
+    background: rgb(var(--color-contrast) / 0.05);
+    font-weight: 500;
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Page content",
+  "settings": []
+}
+{% endschema %}

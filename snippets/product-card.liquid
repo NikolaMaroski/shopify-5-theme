@@ -1,0 +1,104 @@
+{%- comment -%}
+  PRODUCT CARD SNIPPET
+  ====================
+  Reusable product card component used in collections and featured sections.
+  
+  Parameters:
+  - product: The product object (required)
+  - index: Position in grid for stagger animation (optional)
+  - show_vendor: Show vendor name (optional, default false)
+  - show_secondary_image: Show hover image (optional, default true)
+  
+  INTERVIEW POINTS:
+  - Snippet parameters and defaults
+  - Image srcset for responsive images
+  - Money formatting with Liquid filters
+  - Compare at price logic for sales
+  - Animation stagger using CSS custom properties
+{%- endcomment -%}
+
+{%- liquid
+  assign show_vendor = show_vendor | default: false
+  assign show_secondary_image = show_secondary_image | default: true
+  assign animation_delay = index | times: 0.1 | default: 0
+-%}
+
+<article class="product-card" style="--animation-delay: {{ animation_delay }}s">
+  <a href="{{ product.url }}" class="product-card__link">
+    <div class="product-card__image-wrapper">
+      {%- if product.featured_image != blank -%}
+        <img 
+          src="{{ product.featured_image | image_url: width: 600 }}"
+          srcset="
+            {{ product.featured_image | image_url: width: 300 }} 300w,
+            {{ product.featured_image | image_url: width: 450 }} 450w,
+            {{ product.featured_image | image_url: width: 600 }} 600w,
+            {{ product.featured_image | image_url: width: 900 }} 900w
+          "
+          sizes="(min-width: 1200px) 20vw, (min-width: 768px) 33vw, 50vw"
+          alt="{{ product.featured_image.alt | escape | default: product.title }}"
+          width="{{ product.featured_image.width }}"
+          height="{{ product.featured_image.height }}"
+          loading="lazy"
+          class="product-card__image product-card__image--primary"
+        >
+        
+        {%- comment -%} Secondary hover image {%- endcomment -%}
+        {%- if show_secondary_image and product.images.size > 1 -%}
+          <img 
+            src="{{ product.images[1] | image_url: width: 600 }}"
+            srcset="
+              {{ product.images[1] | image_url: width: 300 }} 300w,
+              {{ product.images[1] | image_url: width: 450 }} 450w,
+              {{ product.images[1] | image_url: width: 600 }} 600w
+            "
+            sizes="(min-width: 1200px) 20vw, (min-width: 768px) 33vw, 50vw"
+            alt="{{ product.images[1].alt | escape | default: product.title }}"
+            width="{{ product.images[1].width }}"
+            height="{{ product.images[1].height }}"
+            loading="lazy"
+            class="product-card__image product-card__image--secondary"
+          >
+        {%- endif -%}
+      {%- else -%}
+        {{ 'product-1' | placeholder_svg_tag: 'product-card__image placeholder-svg' }}
+      {%- endif -%}
+
+      {%- comment -%} Badges {%- endcomment -%}
+      <div class="product-card__badges">
+        {%- if product.available == false -%}
+          <span class="product-card__badge product-card__badge--sold-out">Sold Out</span>
+        {%- elsif product.compare_at_price > product.price -%}
+          {%- liquid
+            assign savings = product.compare_at_price | minus: product.price
+            assign savings_percent = savings | times: 100.0 | divided_by: product.compare_at_price | round
+          -%}
+          <span class="product-card__badge product-card__badge--sale">-{{ savings_percent }}%</span>
+        {%- endif -%}
+      </div>
+    </div>
+
+    <div class="product-card__info">
+      {%- if show_vendor and product.vendor != blank -%}
+        <span class="product-card__vendor">{{ product.vendor }}</span>
+      {%- endif -%}
+
+      <h3 class="product-card__title">{{ product.title }}</h3>
+
+      <div class="product-card__price">
+        {%- if product.price_varies -%}
+          <span class="product-card__price-range">
+            From {{ product.price_min | money }}
+          </span>
+        {%- else -%}
+          {%- if product.compare_at_price > product.price -%}
+            <span class="product-card__price-compare">{{ product.compare_at_price | money }}</span>
+          {%- endif -%}
+          <span class="product-card__price-current{% if product.compare_at_price > product.price %} product-card__price-current--sale{% endif %}">
+            {{ product.price | money }}
+          </span>
+        {%- endif -%}
+      </div>
+    </div>
+  </a>
+</article>

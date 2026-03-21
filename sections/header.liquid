@@ -1,0 +1,264 @@
+{%- comment -%}
+  HEADER SECTION
+  ==============
+  Sticky header with logo, navigation, and cart.
+  
+  INTERVIEW POINT: This demonstrates:
+  - Section settings and blocks
+  - Liquid loops and conditionals
+  - Dynamic content from settings
+  - Accessibility considerations (aria labels, roles)
+{%- endcomment -%}
+
+<header class="header" role="banner">
+  <div class="container">
+    <div class="header__inner">
+      {%- comment -%} Logo {%- endcomment -%}
+      <div class="header__logo">
+        <a href="{{ routes.root_url }}" aria-label="{{ shop.name }}">
+          {%- if section.settings.logo != blank -%}
+            <img 
+              src="{{ section.settings.logo | image_url: width: 200 }}"
+              alt="{{ shop.name }}"
+              width="{{ section.settings.logo_width }}"
+              height="auto"
+              loading="eager"
+            >
+          {%- else -%}
+            {{ shop.name }}
+          {%- endif -%}
+        </a>
+      </div>
+
+      {%- comment -%} Main Navigation {%- endcomment -%}
+      <nav class="header__nav" role="navigation" aria-label="Main navigation">
+        {%- for link in section.settings.menu.links -%}
+          {%- if link.links != blank -%}
+            {%- comment -%} Dropdown menu {%- endcomment -%}
+            <div class="header__nav-dropdown">
+              <button class="header__nav-link" aria-expanded="false" aria-haspopup="true">
+                {{ link.title }}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="header__dropdown-menu">
+                {%- for childlink in link.links -%}
+                  <a href="{{ childlink.url }}" class="header__dropdown-link">
+                    {{ childlink.title }}
+                  </a>
+                {%- endfor -%}
+              </div>
+            </div>
+          {%- else -%}
+            <a href="{{ link.url }}" class="header__nav-link{% if link.active %} is-active{% endif %}">
+              {{ link.title }}
+            </a>
+          {%- endif -%}
+        {%- endfor -%}
+      </nav>
+
+      {%- comment -%} Header Actions {%- endcomment -%}
+      <div class="header__actions">
+        {%- comment -%} Search {%- endcomment -%}
+        {%- if section.settings.show_search -%}
+          <a href="{{ routes.search_url }}" class="header__action" aria-label="Search">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </a>
+        {%- endif -%}
+
+        {%- comment -%} Account {%- endcomment -%}
+        {%- if shop.customer_accounts_enabled -%}
+          <a href="{%- if customer -%}{{ routes.account_url }}{%- else -%}{{ routes.account_login_url }}{%- endif -%}" 
+             class="header__action" 
+             aria-label="Account">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </a>
+        {%- endif -%}
+
+        {%- comment -%} Cart {%- endcomment -%}
+        <a href="{{ routes.cart_url }}" 
+           class="header__action" 
+           data-cart-toggle
+           aria-label="Cart ({{ cart.item_count }} items)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          {%- if cart.item_count > 0 -%}
+            <span class="header__cart-count">{{ cart.item_count }}</span>
+          {%- endif -%}
+        </a>
+
+        {%- comment -%} Mobile Menu Toggle {%- endcomment -%}
+        <button class="header__mobile-toggle" data-mobile-menu-toggle aria-label="Menu" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+{%- comment -%} Mobile Menu {%- endcomment -%}
+<div class="mobile-menu__overlay"></div>
+<nav class="mobile-menu" aria-label="Mobile navigation">
+  <div class="mobile-menu__header">
+    <span class="mobile-menu__title">Menu</span>
+    <button class="mobile-menu__close" data-mobile-menu-toggle aria-label="Close menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+  <div class="mobile-menu__links">
+    {%- for link in section.settings.menu.links -%}
+      <a href="{{ link.url }}" class="mobile-menu__link">{{ link.title }}</a>
+    {%- endfor -%}
+  </div>
+</nav>
+
+<style>
+  .header__mobile-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-xs);
+  }
+
+  .header__action {
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 320px;
+    height: 100%;
+    background: rgb(var(--color-base));
+    z-index: 201;
+    transform: translateX(-100%);
+    transition: transform var(--duration-default) var(--ease-smooth);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-menu.is-open {
+    transform: translateX(0);
+  }
+
+  .mobile-menu__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--duration-default) var(--ease-smooth);
+  }
+
+  .mobile-menu__overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mobile-menu__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg);
+    border-bottom: 1px solid rgba(var(--color-contrast), 0.1);
+  }
+
+  .mobile-menu__title {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+  }
+
+  .mobile-menu__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-xs);
+  }
+
+  .mobile-menu__links {
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .mobile-menu__link {
+    font-size: var(--font-size-lg);
+    padding: var(--space-sm) 0;
+  }
+
+  @media (max-width: 768px) {
+    .header__nav {
+      display: none;
+    }
+    
+    .header__mobile-toggle {
+      display: flex;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo image"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 50,
+      "max": 200,
+      "step": 10,
+      "default": 120,
+      "unit": "px",
+      "label": "Logo width"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show search icon",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "sticky_header",
+      "label": "Sticky header",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

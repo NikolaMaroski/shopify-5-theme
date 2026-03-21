@@ -1,0 +1,120 @@
+{%- comment -%}
+  404 PAGE TEMPLATE
+  =================
+  Displays when a page is not found.
+  
+  INTERVIEW POINTS:
+  - Static template (no JSON needed for 404)
+  - Search form integration
+  - UX best practices
+{%- endcomment -%}
+
+<section class="not-found">
+  <div class="container">
+    <div class="not-found__content">
+      <span class="not-found__code">404</span>
+      <h1 class="not-found__title">{{ 'general.404.title' | t }}</h1>
+      <p class="not-found__text">{{ 'general.404.subtext' | t }}</p>
+
+      <div class="not-found__search">
+        <form action="{{ routes.search_url }}" method="get" class="not-found__search-form">
+          <input
+            type="search"
+            name="q"
+            placeholder="{{ 'general.search.placeholder' | t }}"
+            class="not-found__search-input"
+            aria-label="{{ 'general.search.placeholder' | t }}"
+          >
+          <button type="submit" class="not-found__search-btn btn btn--primary">
+            {{ 'general.search.submit' | t }}
+          </button>
+        </form>
+      </div>
+
+      <a href="{{ routes.root_url }}" class="btn btn--secondary not-found__link">
+        {{ 'general.404.link' | t }}
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .not-found {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3xl) 0;
+  }
+
+  .not-found__content {
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .not-found__code {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: clamp(80px, 15vw, 150px);
+    font-weight: 300;
+    line-height: 1;
+    color: rgb(var(--color-contrast) / 0.1);
+    margin-bottom: var(--space-md);
+  }
+
+  .not-found__title {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-2xl);
+    font-weight: 500;
+    margin: 0 0 var(--space-sm);
+  }
+
+  .not-found__text {
+    color: rgb(var(--color-contrast) / 0.7);
+    margin: 0 0 var(--space-xl);
+  }
+
+  .not-found__search {
+    margin-bottom: var(--space-lg);
+  }
+
+  .not-found__search-form {
+    display: flex;
+    gap: var(--space-sm);
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .not-found__search-input {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid rgb(var(--color-contrast) / 0.2);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+  }
+
+  .not-found__search-input:focus {
+    outline: none;
+    border-color: rgb(var(--color-accent));
+  }
+
+  .not-found__search-btn {
+    white-space: nowrap;
+  }
+
+  .not-found__link {
+    display: inline-block;
+  }
+
+  @media (max-width: 480px) {
+    .not-found__search-form {
+      flex-direction: column;
+    }
+
+    .not-found__search-btn {
+      width: 100%;
+    }
+  }
+</style>
