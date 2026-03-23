@@ -1,33 +1,40 @@
 {%- comment -%}
   PRODUCT CARD SNIPPET
   ====================
-  Reusable product card component used in collections and featured sections.
-  
+  Reusable product card. One primary image only (detail page handles the full gallery).
+  Quick Add is an overlay button — fires CartDrawer.addItem() without page navigation.
+  Stock badge driven by stock-indicator snippet.
+
   Parameters:
-  - product: The product object (required)
-  - index: Position in grid for stagger animation (optional)
+  - product:     Product object (required)
+  - index:       Grid position for stagger animation (optional)
   - show_vendor: Show vendor name (optional, default false)
-  - show_secondary_image: Show hover image (optional, default true)
-  
-  INTERVIEW POINTS:
-  - Snippet parameters and defaults
-  - Image srcset for responsive images
-  - Money formatting with Liquid filters
-  - Compare at price logic for sales
-  - Animation stagger using CSS custom properties
 {%- endcomment -%}
 
 {%- liquid
   assign show_vendor = show_vendor | default: false
-  assign show_secondary_image = show_secondary_image | default: true
-  assign animation_delay = index | times: 0.1 | default: 0
+  assign animation_delay = index | times: 0.08 | default: 0
+
+  assign first_available_variant = product.selected_or_first_available_variant
+  assign card_variant_id = first_available_variant.id
+  assign card_variant_available = first_available_variant.available
+  assign product_has_one_variant = false
+  if product.has_only_default_variant
+    assign product_has_one_variant = true
+  endif
 -%}
 
-<article class="product-card" style="--animation-delay: {{ animation_delay }}s">
-  <a href="{{ product.url }}" class="product-card__link">
-    <div class="product-card__image-wrapper">
+<article
+  class="product-card"
+  style="--animation-delay: {{ animation_delay }}s"
+  data-product-card
+  data-product-url="{{ product.url }}"
+>
+  {%- comment -%} Image area — primary image only, no secondary hover swap {%- endcomment -%}
+  <div class="product-card__media">
+    <a href="{{ product.url }}" class="product-card__image-link" tabindex="-1" aria-hidden="true">
       {%- if product.featured_image != blank -%}
-        <img 
+        <img
           src="{{ product.featured_image | image_url: width: 600 }}"
           srcset="
             {{ product.featured_image | image_url: width: 300 }} 300w,
@@ -40,65 +47,87 @@
           width="{{ product.featured_image.width }}"
           height="{{ product.featured_image.height }}"
           loading="lazy"
-          class="product-card__image product-card__image--primary"
+          class="product-card__image"
         >
-        
-        {%- comment -%} Secondary hover image {%- endcomment -%}
-        {%- if show_secondary_image and product.images.size > 1 -%}
-          <img 
-            src="{{ product.images[1] | image_url: width: 600 }}"
-            srcset="
-              {{ product.images[1] | image_url: width: 300 }} 300w,
-              {{ product.images[1] | image_url: width: 450 }} 450w,
-              {{ product.images[1] | image_url: width: 600 }} 600w
-            "
-            sizes="(min-width: 1200px) 20vw, (min-width: 768px) 33vw, 50vw"
-            alt="{{ product.images[1].alt | escape | default: product.title }}"
-            width="{{ product.images[1].width }}"
-            height="{{ product.images[1].height }}"
-            loading="lazy"
-            class="product-card__image product-card__image--secondary"
-          >
-        {%- endif -%}
       {%- else -%}
         {{ 'product-1' | placeholder_svg_tag: 'product-card__image placeholder-svg' }}
       {%- endif -%}
+    </a>
 
-      {%- comment -%} Badges {%- endcomment -%}
-      <div class="product-card__badges">
-        {%- if product.available == false -%}
-          <span class="product-card__badge product-card__badge--sold-out">Sold Out</span>
-        {%- elsif product.compare_at_price > product.price -%}
-          {%- liquid
-            assign savings = product.compare_at_price | minus: product.price
-            assign savings_percent = savings | times: 100.0 | divided_by: product.compare_at_price | round
-          -%}
-          <span class="product-card__badge product-card__badge--sale">-{{ savings_percent }}%</span>
-        {%- endif -%}
-      </div>
-    </div>
-
-    <div class="product-card__info">
-      {%- if show_vendor and product.vendor != blank -%}
-        <span class="product-card__vendor">{{ product.vendor }}</span>
+    {%- comment -%} Badges — sold out or sale percentage {%- endcomment -%}
+    <div class="product-card__badges" aria-hidden="true">
+      {%- if product.available == false -%}
+        <span class="product-card__badge product-card__badge--sold-out">
+          {{- 'products.product.sold_out' | t -}}
+        </span>
+      {%- elsif product.compare_at_price > product.price -%}
+        {%- liquid
+          assign savings_pct = product.compare_at_price | minus: product.price
+          assign savings_pct = savings_pct | times: 100.0 | divided_by: product.compare_at_price | round
+        -%}
+        <span class="product-card__badge product-card__badge--sale">-{{ savings_pct }}%</span>
       {%- endif -%}
+    </div>
 
-      <h3 class="product-card__title">{{ product.title }}</h3>
-
-      <div class="product-card__price">
-        {%- if product.price_varies -%}
-          <span class="product-card__price-range">
-            From {{ product.price_min | money }}
-          </span>
+    {%- comment -%}
+      Quick Add overlay — visible on hover (desktop) / always shown on touch.
+      For multi-variant products it links to the PDP. For single-variant it fires
+      the cart AJAX directly. JS picks this up via [data-quick-add].
+    {%- endcomment -%}
+    {%- if card_variant_available -%}
+      <div class="product-card__quick-add">
+        {%- if product_has_one_variant -%}
+          <button
+            type="button"
+            class="btn btn--primary product-card__quick-add-btn"
+            data-quick-add
+            data-variant-id="{{ card_variant_id }}"
+            aria-label="{{ 'products.product.add_to_cart' | t }}: {{ product.title | escape }}"
+          >
+            <span data-quick-add-text>{{ 'products.product.add_to_cart' | t }}</span>
+            <span class="product-card__quick-add-spinner" hidden aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+                <path d="M12 2a10 10 0 0 1 10 10" />
+              </svg>
+            </span>
+          </button>
         {%- else -%}
-          {%- if product.compare_at_price > product.price -%}
-            <span class="product-card__price-compare">{{ product.compare_at_price | money }}</span>
-          {%- endif -%}
-          <span class="product-card__price-current{% if product.compare_at_price > product.price %} product-card__price-current--sale{% endif %}">
-            {{ product.price | money }}
-          </span>
+          <a
+            href="{{ product.url }}"
+            class="btn btn--primary product-card__quick-add-btn"
+            aria-label="{{ 'products.product.choose_options' | t }}: {{ product.title | escape }}"
+          >
+            {{- 'products.product.choose_options' | t -}}
+          </a>
         {%- endif -%}
       </div>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} Card info {%- endcomment -%}
+  <div class="product-card__info">
+    {%- if show_vendor and product.vendor != blank -%}
+      <span class="product-card__vendor">{{ product.vendor }}</span>
+    {%- endif -%}
+
+    <h3 class="product-card__title">
+      <a href="{{ product.url }}" class="product-card__title-link">{{ product.title }}</a>
+    </h3>
+
+    <div class="product-card__price">
+      {%- if product.price_varies -%}
+        <span class="product-card__price-label">{{ 'products.product.from_price_html' | t: price: product.price_min | money }}</span>
+      {%- else -%}
+        {%- if product.compare_at_price > product.price -%}
+          <s class="product-card__price-compare">{{ product.compare_at_price | money }}</s>
+        {%- endif -%}
+        <span class="product-card__price-current{% if product.compare_at_price > product.price %} product-card__price-current--sale{% endif %}">
+          {{- product.price | money -}}
+        </span>
+      {%- endif -%}
     </div>
-  </a>
+
+    {%- comment -%} Inline stock indicator — rendered only when below threshold {%- endcomment -%}
+    {%- render 'stock-indicator', product: product, variant: first_available_variant -%}
+  </div>
 </article>

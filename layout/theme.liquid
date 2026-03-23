@@ -43,6 +43,13 @@
       soldOut: `{{ 'products.product.sold_out' | t }}`,
       unavailable: `{{ 'products.product.unavailable' | t }}`
     };
+
+    {%- if template.name == 'product' -%}
+    window.productData = {
+      id: {{ product.id }},
+      handle: {{ product.handle | json }}
+    };
+    {%- endif -%}
   </script>
 
   <style>
@@ -80,6 +87,7 @@
       --header-height: 80px;
       
       /* Animations */
+      --duration-fast: 120ms;
       --duration-short: 150ms;
       --duration-default: 300ms;
       --duration-long: 500ms;
@@ -106,6 +114,7 @@
     {{ 'accessibility.skip_to_content' | t }}
   </a>
 
+  {%- section 'announcement-bar' -%}
   {%- sections 'header-group' -%}
 
   <main id="MainContent" class="main-content" role="main" tabindex="-1">

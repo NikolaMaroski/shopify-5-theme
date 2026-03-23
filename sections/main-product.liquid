@@ -1,29 +1,16 @@
-{%- comment -%}
-  MAIN PRODUCT SECTION
-  ====================
-  Complete product page layout with gallery, form, and details.
-  
-  INTERVIEW POINTS:
-  - Product object deep properties (variants, options, images)
-  - Form handling for add to cart
-  - Variant selection with option1/option2/option3
-  - JavaScript integration via data attributes
-  - Structured data for SEO
-  - Metafields access
-{%- endcomment -%}
-
 {%- liquid
   assign current_variant = product.selected_or_first_available_variant
   assign featured_image = current_variant.featured_image | default: product.featured_image
 -%}
 
-<section class="section product" data-product-section>
+<section class="section product-section" data-product-section>
   <div class="container">
     <div class="product__grid">
-      {%- comment -%} Product Gallery {%- endcomment -%}
+
+      {%- comment -%} ── Gallery — sticky column, full gallery thumbnails only on detail ── {%- endcomment -%}
       <div class="product__gallery" data-product-gallery>
         <div class="product__main-image-wrapper">
-          <img 
+          <img
             src="{{ featured_image | image_url: width: 1200 }}"
             srcset="
               {{ featured_image | image_url: width: 600 }} 600w,
@@ -36,21 +23,24 @@
             height="{{ featured_image.height }}"
             class="product__main-image"
             data-main-image
+            id="product-main-image"
           >
         </div>
 
         {%- if product.images.size > 1 -%}
-          <div class="product__thumbnails">
+          <div class="product__thumbnails" role="list">
             {%- for image in product.images -%}
-              <button 
+              <button
+                type="button"
                 class="product__thumbnail{% if image == featured_image %} is-active{% endif %}"
                 data-thumbnail
                 data-image-url="{{ image | image_url: width: 1200 }}"
                 data-image-srcset="{{ image | image_url: width: 600 }} 600w, {{ image | image_url: width: 900 }} 900w, {{ image | image_url: width: 1200 }} 1200w"
                 data-image-alt="{{ image.alt | escape | default: product.title }}"
-                aria-label="View image {{ forloop.index }}"
+                aria-label="{{ 'products.product.media.load_image' | t: index: forloop.index }}"
+                role="listitem"
               >
-                <img 
+                <img
                   src="{{ image | image_url: width: 150 }}"
                   alt="{{ image.alt | escape | default: product.title }}"
                   width="75"
@@ -63,7 +53,7 @@
         {%- endif -%}
       </div>
 
-      {%- comment -%} Product Info {%- endcomment -%}
+      {%- comment -%} ── Product info column ── {%- endcomment -%}
       <div class="product__info">
         {%- if section.settings.show_vendor and product.vendor != blank -%}
           <p class="product__vendor">{{ product.vendor }}</p>
@@ -73,28 +63,36 @@
 
         <div class="product__price" data-product-price>
           {%- if current_variant.compare_at_price > current_variant.price -%}
-            <span class="product__price-compare">
-              {{ current_variant.compare_at_price | money }}
-            </span>
+            <s class="product__price-compare">{{ current_variant.compare_at_price | money }}</s>
           {%- endif -%}
-          <span class="product__price-current{% if current_variant.compare_at_price > current_variant.price %} product__price-current--sale{% endif %}" data-price>
-            {{ current_variant.price | money }}
+          <span
+            class="product__price-current{% if current_variant.compare_at_price > current_variant.price %} product__price-current--sale{% endif %}"
+            data-price
+          >
+            {{- current_variant.price | money -}}
           </span>
         </div>
 
-        {%- comment -%} Product Form {%- endcomment -%}
-        {%- form 'product', product, class: 'product__form', data-product-form: '' -%}
+        {%- comment -%} Inline stock indicator {%- endcomment -%}
+        {%- render 'stock-indicator', product: product, variant: current_variant -%}
+
+        {%- comment -%} ── Product Form ── {%- endcomment -%}
+        {%- form 'product', product, class: 'product__form', id: 'product-form', data-product-form: '' -%}
           <input type="hidden" name="id" value="{{ current_variant.id }}" data-variant-id>
 
-          {%- comment -%} Variant Options {%- endcomment -%}
           {%- unless product.has_only_default_variant -%}
             <div class="product__options">
               {%- for option in product.options_with_values -%}
                 <div class="product__option">
-                  <label class="product__option-label">
+                  <label class="product__option-label" id="option-label-{{ option.position }}">
                     {{ option.name }}
                   </label>
-                  <div class="product__option-values" data-option-position="{{ option.position }}">
+                  <div
+                    class="product__option-values"
+                    data-option-position="{{ option.position }}"
+                    role="group"
+                    aria-labelledby="option-label-{{ option.position }}"
+                  >
                     {%- for value in option.values -%}
                       {%- liquid
                         assign option_disabled = true
@@ -115,14 +113,16 @@
                           endcase
                         endfor
                       -%}
-                      <button 
+                      <button
                         type="button"
                         class="product__option-btn{% if current_variant.options[forloop.parentloop.index0] == value %} is-selected{% endif %}{% if option_disabled %} is-disabled{% endif %}"
-                        data-option-value="{{ value }}"
+                        data-option-btn
+                        data-option-value="{{ value | escape }}"
                         data-option-position="{{ option.position }}"
-                        {% if option_disabled %}disabled{% endif %}
+                        {% if option_disabled %}disabled aria-disabled="true"{% endif %}
+                        aria-pressed="{% if current_variant.options[forloop.parentloop.index0] == value %}true{% else %}false{% endif %}"
                       >
-                        {{ value }}
+                        {{- value -}}
                       </button>
                     {%- endfor -%}
                   </div>
@@ -131,106 +131,174 @@
             </div>
           {%- endunless -%}
 
-          {%- comment -%} Quantity {%- endcomment -%}
-          <div class="product__quantity">
-            <label class="product__quantity-label" for="quantity">Quantity</label>
-            <div class="quantity-stepper">
-              <button type="button" class="quantity-stepper__btn" data-quantity-decrease aria-label="Decrease quantity">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-              </button>
-              <input 
-                type="number" 
-                id="quantity" 
-                name="quantity" 
-                value="1" 
-                min="1" 
-                max="{{ current_variant.inventory_quantity | default: 99 }}"
-                class="quantity-stepper__input"
-                data-quantity-input
-              >
-              <button type="button" class="quantity-stepper__btn" data-quantity-increase aria-label="Increase quantity">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-              </button>
+          {%- comment -%} Quantity stepper {%- endcomment -%}
+          {%- if section.settings.show_quantity -%}
+            <div class="product__quantity">
+              <label class="product__quantity-label" for="product-quantity">
+                {{- 'products.product.quantity.label' | t -}}
+              </label>
+              <div class="quantity-stepper">
+                <button
+                  type="button"
+                  class="quantity-stepper__btn"
+                  data-quantity-decrease
+                  aria-label="{{ 'products.product.quantity.decrease' | t }}"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+                <input
+                  type="number"
+                  id="product-quantity"
+                  name="quantity"
+                  value="1"
+                  min="1"
+                  class="quantity-stepper__input"
+                  data-quantity-input
+                  aria-label="{{ 'products.product.quantity.input_label' | t: product: product.title | escape }}"
+                >
+                <button
+                  type="button"
+                  class="quantity-stepper__btn"
+                  data-quantity-increase
+                  aria-label="{{ 'products.product.quantity.increase' | t }}"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
+          {%- endif -%}
 
-          {%- comment -%} Add to Cart Button {%- endcomment -%}
-          <button 
-            type="submit" 
+          {%- comment -%}
+            Add to Cart button.
+            No inline spinner — loading state is handled entirely by CSS (.is-loading class
+            toggled by JS). This prevents the textContent + hidden-span conflict.
+          {%- endcomment -%}
+          <button
+            type="submit"
             class="btn btn--primary btn--large btn--full product__add-btn"
             data-add-to-cart
             {% unless current_variant.available %}disabled{% endunless %}
           >
             <span data-add-to-cart-text>
               {%- if current_variant.available -%}
-                Add to Cart
+                {{- 'products.product.add_to_cart' | t -}}
               {%- else -%}
-                Sold Out
+                {{- 'products.product.sold_out' | t -}}
               {%- endif -%}
-            </span>
-            <span class="product__add-btn-loading" data-loading hidden>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin">
-                <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
-                <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
-              </svg>
             </span>
           </button>
         {%- endform -%}
 
-        {%- comment -%} Product Description {%- endcomment -%}
+        {%- comment -%} Description {%- endcomment -%}
         {%- if product.description != blank -%}
-          <div class="product__description">
+          <div class="product__description rte">
             {{ product.description }}
           </div>
         {%- endif -%}
 
-        {%- comment -%} Product Meta {%- endcomment -%}
+        {%- comment -%} Meta — care, type, SKU {%- endcomment -%}
         <div class="product__meta">
           {%- if product.metafields.custom.care_instructions != blank -%}
-            <div class="product__meta-item">
-              <h3 class="product__meta-title">Care Instructions</h3>
-              <p>{{ product.metafields.custom.care_instructions }}</p>
-            </div>
+            <details class="product__meta-item product__accordion">
+              <summary class="product__accordion-trigger">
+                {{- 'products.product.care_instructions' | t -}}
+                <svg class="product__accordion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </summary>
+              <div class="product__accordion-body">{{ product.metafields.custom.care_instructions }}</div>
+            </details>
           {%- endif -%}
 
-          <div class="product__meta-item">
-            <h3 class="product__meta-title">Details</h3>
-            <ul class="product__meta-list">
-              {%- if product.type != blank -%}
-                <li><strong>Type:</strong> {{ product.type }}</li>
-              {%- endif -%}
-              {%- if current_variant.sku != blank -%}
-                <li><strong>SKU:</strong> {{ current_variant.sku }}</li>
-              {%- endif -%}
-              {%- if current_variant.barcode != blank -%}
-                <li><strong>Barcode:</strong> {{ current_variant.barcode }}</li>
-              {%- endif -%}
-            </ul>
-          </div>
+          {%- if product.type != blank or current_variant.sku != blank -%}
+            <details class="product__meta-item product__accordion">
+              <summary class="product__accordion-trigger">
+                {{- 'products.product.details' | t -}}
+                <svg class="product__accordion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </summary>
+              <div class="product__accordion-body">
+                <ul class="product__meta-list">
+                  {%- if product.type != blank -%}
+                    <li><strong>{{ 'products.product.type' | t }}:</strong> {{ product.type }}</li>
+                  {%- endif -%}
+                  {%- if current_variant.sku != blank -%}
+                    <li><strong>{{ 'products.product.sku' | t }}:</strong> {{ current_variant.sku }}</li>
+                  {%- endif -%}
+                </ul>
+              </div>
+            </details>
+          {%- endif -%}
         </div>
       </div>
     </div>
   </div>
-
-  {%- comment -%} Variant data for JavaScript {%- endcomment -%}
-  <script type="application/json" data-product-json>
-    {
-      "id": {{ product.id }},
-      "title": {{ product.title | json }},
-      "variants": {{ product.variants | json }},
-      "options": {{ product.options | json }},
-      "url": {{ product.url | json }},
-      "featured_image": {{ product.featured_image | image_url: width: 1200 | json }}
-    }
-  </script>
 </section>
 
-{%- comment -%} Structured Data for SEO {%- endcomment -%}
+{%- comment -%}
+  Sticky Add to Cart bar — appears when the main ATC button scrolls off-screen.
+  Only rendered when enabled via section settings.
+{%- endcomment -%}
+{%- if section.settings.enable_sticky_atc -%}
+  <div
+    class="sticky-atc"
+    data-sticky-atc
+    aria-hidden="true"
+    aria-label="{{ 'products.product.sticky_atc_label' | t: title: product.title | escape }}"
+  >
+    <div class="container">
+      <div class="sticky-atc__inner">
+        <div class="sticky-atc__product">
+          {%- if product.featured_image != blank -%}
+            <img
+              src="{{ product.featured_image | image_url: width: 80 }}"
+              alt="{{ product.featured_image.alt | escape | default: product.title }}"
+              width="40"
+              height="40"
+              class="sticky-atc__image"
+            >
+          {%- endif -%}
+          <div class="sticky-atc__meta">
+            <span class="sticky-atc__title">{{ product.title }}</span>
+            <span class="sticky-atc__price" data-sticky-price>{{ current_variant.price | money }}</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn--primary sticky-atc__btn"
+          data-sticky-atc-btn
+          {% unless current_variant.available %}disabled{% endunless %}
+        >
+          {%- if current_variant.available -%}
+            {{- 'products.product.add_to_cart' | t -}}
+          {%- else -%}
+            {{- 'products.product.sold_out' | t -}}
+          {%- endif -%}
+        </button>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{%- comment -%} Variant data consumed by global.js ProductForm {%- endcomment -%}
+<script type="application/json" id="product-json-{{ section.id }}">
+  {
+    "id": {{ product.id }},
+    "title": {{ product.title | json }},
+    "variants": {{ product.variants | json }},
+    "options": {{ product.options | json }},
+    "url": {{ product.url | json }},
+    "featured_image": {{ product.featured_image | image_url: width: 1200 | json }}
+  }
+</script>
+
+{%- comment -%} Structured data {%- endcomment -%}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org/",
@@ -243,25 +311,20 @@
   ],
   "description": {{ product.description | strip_html | truncate: 500 | json }},
   "sku": {{ current_variant.sku | json }},
-  "brand": {
-    "@type": "Brand",
-    "name": {{ product.vendor | json }}
-  },
+  "brand": { "@type": "Brand", "name": {{ product.vendor | json }} },
   "offers": {
     "@type": "Offer",
     "url": "{{ shop.url }}{{ product.url }}",
     "priceCurrency": {{ cart.currency.iso_code | json }},
     "price": {{ current_variant.price | divided_by: 100.0 }},
     "availability": "https://schema.org/{% if current_variant.available %}InStock{% else %}OutOfStock{% endif %}",
-    "seller": {
-      "@type": "Organization",
-      "name": {{ shop.name | json }}
-    }
+    "seller": { "@type": "Organization", "name": {{ shop.name | json }} }
   }
 }
 </script>
 
 <style>
+  /* ── Product grid layout ── */
   .product__grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -285,28 +348,28 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity var(--duration-default);
+    transition: opacity var(--duration-default) var(--ease-smooth);
   }
 
+  /* ── Thumbnails ── */
   .product__thumbnails {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-sm);
     margin-top: var(--space-md);
-    overflow-x: auto;
-    padding-bottom: var(--space-xs);
   }
 
   .product__thumbnail {
     flex-shrink: 0;
-    width: 75px;
-    height: 75px;
+    width: 72px;
+    height: 72px;
     border: 2px solid transparent;
     border-radius: var(--radius-sm);
     overflow: hidden;
     cursor: pointer;
     background: none;
     padding: 0;
-    transition: border-color var(--duration-fast);
+    transition: border-color var(--duration-short) var(--ease-smooth);
   }
 
   .product__thumbnail.is-active,
@@ -318,8 +381,10 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
   }
 
+  /* ── Info column ── */
   .product__vendor {
     font-size: var(--font-size-sm);
     text-transform: uppercase;
@@ -337,10 +402,11 @@
 
   .product__price {
     font-size: var(--font-size-xl);
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-sm);
     display: flex;
     align-items: baseline;
     gap: var(--space-sm);
+    flex-wrap: wrap;
   }
 
   .product__price-compare {
@@ -350,9 +416,10 @@
   }
 
   .product__price-current--sale {
-    color: #dc2626;
+    color: rgb(var(--color-accent));
   }
 
+  /* ── Form ── */
   .product__form {
     display: flex;
     flex-direction: column;
@@ -369,6 +436,9 @@
   .product__option-label {
     display: block;
     font-weight: 500;
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: var(--space-sm);
   }
 
@@ -380,12 +450,14 @@
 
   .product__option-btn {
     padding: var(--space-sm) var(--space-lg);
-    border: 1px solid rgba(var(--color-contrast), 0.2);
+    border: 1px solid rgba(var(--color-contrast), 0.25);
     border-radius: var(--radius-sm);
     background: transparent;
     cursor: pointer;
     font-size: var(--font-size-sm);
-    transition: all var(--duration-fast);
+    font-family: var(--font-body);
+    transition: all var(--duration-short) var(--ease-smooth);
+    line-height: 1;
   }
 
   .product__option-btn:hover:not(.is-disabled) {
@@ -399,11 +471,12 @@
   }
 
   .product__option-btn.is-disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
     text-decoration: line-through;
   }
 
+  /* ── Quantity stepper ── */
   .product__quantity {
     display: flex;
     flex-direction: column;
@@ -412,36 +485,92 @@
 
   .product__quantity-label {
     font-weight: 500;
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
-  .product__add-btn {
-    position: relative;
+  .quantity-stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(var(--color-contrast), 0.25);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    width: fit-content;
   }
 
-  .product__add-btn-loading {
-    position: absolute;
-    inset: 0;
+  .quantity-stepper__btn {
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(var(--color-contrast), 0.7);
+    transition: background var(--duration-short) var(--ease-smooth);
+    flex-shrink: 0;
   }
 
-  .product__add-btn[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .quantity-stepper__btn:hover {
+    background: rgba(var(--color-contrast), 0.06);
+    color: rgb(var(--color-contrast));
+  }
+
+  .quantity-stepper__input {
+    width: 52px;
+    height: 44px;
+    border: none;
+    border-left: 1px solid rgba(var(--color-contrast), 0.2);
+    border-right: 1px solid rgba(var(--color-contrast), 0.2);
+    text-align: center;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    background: transparent;
+    color: rgb(var(--color-contrast));
+    -moz-appearance: textfield;
+  }
+
+  .quantity-stepper__input::-webkit-outer-spin-button,
+  .quantity-stepper__input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  /* ── ATC button loading state ── */
+  .product__add-btn {
+    position: relative;
+    min-height: 52px;
+  }
+
+  .product__add-btn.is-loading {
+    pointer-events: none;
+  }
+
+  .product__add-btn.is-loading [data-add-to-cart-text]::after {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-left: var(--space-sm);
+    vertical-align: middle;
   }
 
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
 
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-
+  /* ── Description ── */
   .product__description {
-    line-height: 1.7;
-    color: rgba(var(--color-contrast), 0.8);
+    line-height: 1.8;
+    color: rgba(var(--color-contrast), 0.85);
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid rgba(var(--color-contrast), 0.1);
   }
 
   .product__description h2,
@@ -460,39 +589,128 @@
     padding-left: var(--space-lg);
   }
 
+  /* ── Accordion meta ── */
   .product__meta {
-    margin-top: var(--space-xl);
-    padding-top: var(--space-xl);
-    border-top: 1px solid rgba(var(--color-contrast), 0.1);
+    margin-top: var(--space-lg);
   }
 
-  .product__meta-item {
-    margin-bottom: var(--space-lg);
+  .product__accordion {
+    border-bottom: 1px solid rgba(var(--color-contrast), 0.1);
   }
 
-  .product__meta-item:last-child {
-    margin-bottom: 0;
-  }
-
-  .product__meta-title {
+  .product__accordion-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: var(--space-md) 0;
+    font-weight: 500;
     font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: var(--space-sm);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .product__accordion-trigger::-webkit-details-marker {
+    display: none;
+  }
+
+  .product__accordion-icon {
+    transition: transform var(--duration-short) var(--ease-smooth);
+    flex-shrink: 0;
+  }
+
+  .product__accordion[open] .product__accordion-icon {
+    transform: rotate(180deg);
+  }
+
+  .product__accordion-body {
+    padding-bottom: var(--space-md);
+    font-size: var(--font-size-sm);
+    color: rgba(var(--color-contrast), 0.75);
+    line-height: 1.7;
   }
 
   .product__meta-list {
     list-style: none;
     padding: 0;
     margin: 0;
-    font-size: var(--font-size-sm);
-    color: rgba(var(--color-contrast), 0.7);
   }
 
   .product__meta-list li {
     margin-bottom: var(--space-xs);
   }
 
+  /* ── Sticky ATC ── */
+  .sticky-atc {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    background: rgb(var(--color-base));
+    border-top: 1px solid rgba(var(--color-contrast), 0.12);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(100%);
+    transition: transform var(--duration-default) var(--ease-smooth);
+    will-change: transform;
+  }
+
+  .sticky-atc.is-visible {
+    transform: translateY(0);
+  }
+
+  .sticky-atc__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
+  }
+
+  .sticky-atc__product {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    min-width: 0;
+  }
+
+  .sticky-atc__image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+  }
+
+  .sticky-atc__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .sticky-atc__title {
+    font-weight: 500;
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sticky-atc__price {
+    font-size: var(--font-size-sm);
+    color: rgba(var(--color-contrast), 0.7);
+  }
+
+  .sticky-atc__btn {
+    flex-shrink: 0;
+    min-width: 160px;
+  }
+
+  /* ── Responsive ── */
   @media (max-width: 768px) {
     .product__grid {
       grid-template-columns: 1fr;
@@ -501,6 +719,15 @@
 
     .product__gallery {
       position: static;
+    }
+
+    .sticky-atc__meta {
+      display: none;
+    }
+
+    .sticky-atc__btn {
+      min-width: 0;
+      flex: 1;
     }
   }
 </style>
@@ -517,9 +744,16 @@
     },
     {
       "type": "checkbox",
-      "id": "enable_sticky_gallery",
-      "label": "Enable sticky gallery",
+      "id": "show_quantity",
+      "label": "Show quantity selector",
       "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_atc",
+      "label": "Enable sticky Add to Cart bar",
+      "default": true,
+      "info": "A bar slides up from the bottom when the main button scrolls out of view."
     }
   ],
   "presets": [

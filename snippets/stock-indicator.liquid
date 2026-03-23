@@ -1,0 +1,33 @@
+{%- comment -%}
+  STOCK INDICATOR SNIPPET
+  =======================
+  Shows a low-stock urgency badge when inventory is tracked and below the threshold.
+  Renders nothing for unlimited inventory or when stock is comfortable.
+
+  Parameters:
+  - product: Product object (required)
+  - variant: Specific variant to check (optional, falls back to featured variant)
+  - threshold: Show badge when qty is at or below this number (optional, default 5)
+{%- endcomment -%}
+
+{%- liquid
+  assign check_variant = variant | default: product.selected_or_first_available_variant
+  assign low_stock_threshold = threshold | default: 5
+
+  assign show_badge = false
+  if check_variant.inventory_management == 'shopify'
+    if check_variant.inventory_policy == 'deny'
+      if check_variant.inventory_quantity > 0 and check_variant.inventory_quantity <= low_stock_threshold
+        assign show_badge = true
+        assign stock_qty = check_variant.inventory_quantity
+      endif
+    endif
+  endif
+-%}
+
+{%- if show_badge -%}
+  <p class="stock-indicator" aria-live="polite">
+    <span class="stock-indicator__dot" aria-hidden="true"></span>
+    {{- 'products.product.low_stock_with_count' | t: count: stock_qty -}}
+  </p>
+{%- endif -%}

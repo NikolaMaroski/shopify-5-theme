@@ -45,7 +45,7 @@
       </div>
     {%- endif -%}
 
-    <div class="collection-layout">
+    <div class="collection-layout{% if section.settings.enable_filtering and collection.filters.size > 0 %} collection-layout--with-filters{% endif %}">
       {%- comment -%} Filters Sidebar {%- endcomment -%}
       {%- if section.settings.enable_filtering and collection.filters.size > 0 -%}
         <aside class="collection-filters" data-filters aria-label="Product filters">
@@ -263,10 +263,15 @@
     min-width: 180px;
   }
 
+  /* Full-width by default; sidebar column only appears when filters exist */
   .collection-layout {
     display: grid;
-    grid-template-columns: 250px 1fr;
+    grid-template-columns: 1fr;
     gap: var(--space-2xl);
+  }
+
+  .collection-layout--with-filters {
+    grid-template-columns: 240px 1fr;
   }
 
   .collection-filters {
@@ -405,7 +410,7 @@
   }
 
   @media (max-width: 768px) {
-    .collection-layout {
+    .collection-layout--with-filters {
       grid-template-columns: 1fr;
     }
 

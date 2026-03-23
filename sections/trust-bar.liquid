@@ -1,0 +1,114 @@
+{%- comment -%}
+  TRUST BAR
+  =========
+  Schema-driven trust/USP badges — fully editable in the theme editor.
+  Each block is an independent icon + headline + sub-text unit.
+
+  Differentiator: every block has its own SVG icon choice (no hardcoded icons),
+  headline, and optional sub-label. Can be placed anywhere on any page.
+{%- endcomment -%}
+
+{%- if section.blocks.size > 0 -%}
+  <div class="trust-bar section section--flush">
+    <div class="container">
+      <ul class="trust-bar__list" role="list">
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'badge' -%}
+            <li class="trust-bar__item" {{ block.shopify_attributes }}>
+              <span class="trust-bar__icon" aria-hidden="true">
+                {%- case block.settings.icon -%}
+                  {%- when 'truck' -%}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                      <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                  {%- when 'shield' -%}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                  {%- when 'refresh' -%}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                  {%- when 'star' -%}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                  {%- when 'lock' -%}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  {%- when 'leaf' -%}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                      <path d="M17 8C8 10 5.9 16.17 3.82 19.5c1.49-.7 2.88-1.41 4.17-2.03 3.53-1.7 6.63-3.07 9.01-3.07C21 14.4 21 22 21 22c0-4.2-4-14-4-14z"/>
+                    </svg>
+                  {%- else -%}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/>
+                    </svg>
+                {%- endcase -%}
+              </span>
+              <span class="trust-bar__label">
+                {{ block.settings.label | escape }}
+                {%- if block.settings.sublabel != blank -%}
+                  <span class="trust-bar__sublabel">{{ block.settings.sublabel | escape }}</span>
+                {%- endif -%}
+              </span>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Trust bar",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "badge",
+      "name": "Trust badge",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "truck",   "label": "Truck (shipping)" },
+            { "value": "shield",  "label": "Shield (secure)" },
+            { "value": "refresh", "label": "Arrows (returns)" },
+            { "value": "star",    "label": "Star (quality)" },
+            { "value": "lock",    "label": "Lock (payments)" },
+            { "value": "leaf",    "label": "Leaf (eco)" }
+          ],
+          "default": "truck"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Free Shipping"
+        },
+        {
+          "type": "text",
+          "id": "sublabel",
+          "label": "Sub-label (optional)",
+          "default": "On orders over $50"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Trust bar",
+      "blocks": [
+        { "type": "badge", "settings": { "icon": "truck",   "label": "Free Shipping",    "sublabel": "On orders over $50" } },
+        { "type": "badge", "settings": { "icon": "refresh", "label": "Easy Returns",      "sublabel": "30-day hassle-free" } },
+        { "type": "badge", "settings": { "icon": "lock",    "label": "Secure Checkout",   "sublabel": "256-bit SSL encrypted" } },
+        { "type": "badge", "settings": { "icon": "star",    "label": "Rated 4.9/5",       "sublabel": "From 2,000+ reviews" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
